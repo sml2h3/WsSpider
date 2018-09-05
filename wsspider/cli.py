@@ -21,7 +21,7 @@ import sys
 import argparse
 from .__version__ import __version__
 from .__project__ import __project__
-from .config import batch_set_config, get_config
+from .config import batch_set_config, get_config, _base_config
 
 CMD_DESCRIPTION = """{} command line mode
 This command could start a thread for crawling data from http://wenshu.court.gov.cn/.
@@ -34,20 +34,12 @@ def main(args):
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--mode', '-m', type=int, default=0,
                         help="If it's 0, it's the producer, if it's 1, it's the worker, if it's 2, it's the website.")
-    parser.add_argument('--host-rabbitmq', '-hr', type=str, default="127.0.0.1",
-                        help="Host for rabbitmq.")
-    parser.add_argument('--port-rabbitmq', '-pr', type=int, default=5672,
-                        help="Port for Rabbitmq Server.")
-    parser.add_argument('--host-elastic', '-he', type=str, default="127.0.0.1",
-                        help="Host for elasticsearch.")
-    parser.add_argument('--port-elastic', '-pe', type=int, default=9200,
-                        help="Port for ELastic Server.")
-    parser.add_argument('--port-msg', '-pm', type=int, default=39254,
-                        help="Port for this system.")
-    parser.add_argument('--sec-key', type=str, default='6a33e893512f7a8309ae448ca1df736d',
-                        help='Make communication more believable.')
-    parser.add_argument('--port-web', '-wp', type=int, default=9999,
-                        help='Port for Website.')
+    parser.add_argument('--test', action='store_true', default=False,
+                        help="start debug mode")
+    parser.add_argument('--test_model', '-tm', type=str, default='installtion',
+                        help="The model which you want to test.")
+    parser.add_argument('--debug', '-d', action="store_true", default=False,
+                        help="debug mode")
 
     parsed_args = parser.parse_args(args)
 
@@ -55,9 +47,25 @@ def main(args):
 
     batch_set_config(**vars(parsed_args))
 
+    batch_set_config(**_base_config)
+
     handle_special_flags(parsed_args_dict)
 
     mode = get_config('mode')
+
+    test = get_config('test')
+
+    if test:
+        test_model = get_config('test_model')
+        if test_model == 'installtion':
+            from .test.installtion import debug
+            debug()
+        if test_model == 'rabbitmq':
+            from .test.rabbitmq import debug
+            debug()
+        if test_model == 'elastic':
+            from .test.elastic import debug
+            debug()
 
     if mode == 0:
         from .producer.app import app_start
