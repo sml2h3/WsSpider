@@ -16,9 +16,11 @@
 @time: 2018/9/5 上午1:35
 """
 import sys
+import os
 from wsspider.config import get_config
 from wsspider.logger.logger import Logger
 from wsspider.check.connection import check_rabbitmq, check_elastic
+from .decision import Decision
 
 logger = Logger("producer")
 
@@ -38,5 +40,14 @@ if not debug:
     elastic_status = check_elastic()
     if not elastic_status:
         sys.exit(0)
+
+work_path = os.path.abspath(os.path.dirname(__file__))
+decision_file = work_path + "/decision.ws"
+if not os.path.exists(decision_file):
+    logger.info("Decision File has not created.Wait me make a file for decision.")
+    d = Decision()
+    d.make_decision()
+else:
+    logger.info("Decision File has created.")
 
 logger.info("Welcome to use WsSpider's Producer System!")
